@@ -2,9 +2,10 @@ import cv2
 import numpy as np
 
 from image_tools import *
-from moire import linear_wave, dither
-from basic_shapes import circles
+from moire import linear_wave, dither, nonlinear_wave
+from basic_shapes import circles, radialShape
 from module import RecaptureModule
+import random
 
 import argparse
 import os
@@ -90,11 +91,26 @@ def main():
                                    nl_moire=True, nl_dir='b', nl_type='sine', nl_skew=0,
                                    nl_cont=10, nl_dev=3, nl_tb=0.15, nl_lr=0.15,
                                    gamma=args.gamma, margins=None, seed=args.seed)
-    canvas, nl_mask = recap_module(canvas,
+    try:
+        canvas, nl_mask = recap_module(canvas,
+                          new_src_pt = src_pt,
+                          verbose=args.recapture_verbose,
+                          show_mask=args.show_mask)
+    except Exception as e:
+        canvas = recap_module(canvas,
                           new_src_pt = src_pt,
                           verbose=args.recapture_verbose,
                           show_mask=args.show_mask)
 
+    r, g, b = random.randint(0, 224), random.randint(0, 224), random.randint(0, 224)
+    canvas = dither(canvas, gap=10, skew=50, pattern='rgb', contrast=100, rowwise=False, color=(r,g,b))
+    # canvas, _ = nonlinear_wave(canvas, gap=4, skew=0, thick=1, directions='b',
+    #             pattern='sine', contrast=30, color=(r,g,b), dev=3,
+    #             tb_margins=0.3, lr_margins=0.3, seed=42)
+    # lineNSkew(canvas, gap=1, skew=50, thick=1, color=(255,255,255))
+    # circles(canvas, [(H//2,W//2-64),(H//2,W//2+64)], max_rad=H//2,color=lightgray)
+    # radialShape(canvas, (H//2-128,W//2-128), 512, 60, thick=2, color=lightgray)
+    # radialShape(canvas, (H//2+128,W//2+128), 512, 60, thick=2, color=lightgray)
     '''
     canvas = dither(canvas,gap=10, skew=50, pattern='rgb', contrast=30, rowwise=True)
     lineNSkew(canvas, gap=1, skew=50, thick=1, color=(255,255,255))
@@ -106,25 +122,26 @@ def main():
     # ===========================================================================================
 
     # Display result
-    cv2.namedWindow("nonlinear mask", cv2.WINDOW_NORMAL)
-    cv2.imshow("modified", canvas)
-    if args.show_mask:
-        cv2.imshow("nonlinear mask", nl_mask)
-    if not args.empty and False:        # TODO edit
-        cv2.imshow("original", original)
-        if original.shape == canvas.shape and args.psnr:
-            psnr_val = psnr(canvas,original)
-            print("PSNR value: %.4f db" % psnr_val)
-    cv2.waitKey(0)
+    # cv2.namedWindow("nonlinear mask", cv2.WINDOW_NORMAL)
+    # cv2.imshow("modified", canvas)
+    # if args.show_mask:
+    #     cv2.imshow("nonlinear mask", nl_mask)
+    # if not args.empty and False:        # TODO edit
+    #     cv2.imshow("original", original)
+    #     if original.shape == canvas.shape and args.psnr:
+    #         psnr_val = psnr(canvas,original)
+    #         print("PSNR value: %.4f db" % psnr_val)
+    # cv2.waitKey(0)
 
     # Save output
-    if not args.empty and args.save:
-        if not os.path.isdir(args.savepath):
-            os.makedirs(args.savepath)
-        save_name = args.save + '_g{}'.format(args.gamma)
-        save_name += '_{:.4f}'.format(psnr_val)
-        save_name += '.{}'.format(args.save_format)
-        cv2.imwrite(os.path.join(args.savepath, save_name), canvas)
+    # if not args.empty and args.save:
+    if not os.path.isdir(args.savepath):
+        os.makedirs(args.savepath)
+    # save_name = args.save + '_g{}'.format(args.gamma)
+    save_name = args.save
+    # save_name += '_{:.4f}'.format(psnr_val)
+    save_name += '.{}'.format(args.save_format)
+    cv2.imwrite(os.path.join(args.savepath, save_name), canvas)
 
 if __name__ == "__main__":
     main()
