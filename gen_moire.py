@@ -1,19 +1,21 @@
 import random
 import cv2
 import numpy as np
+import os, glob
+import pandas as pd
+from tqdm import tqdm
 
 from src.moire import linear_wave, dither, nonlinear_wave
 from src.module import RecaptureModule
 
 
 def generate(
-    img_path: str, 
+    canvas: str, 
     recapture_verbose: bool = False, 
     gamma: float = 1.0, 
     show_mask: bool = False, 
     seed: int = 42
 ):
-    canvas = cv2.imread(img_path, cv2.IMREAD_COLOR)
     original = canvas.copy()
     H, W, _ = canvas.shape
     dst_H, dst_W, _ = original.shape
@@ -58,10 +60,10 @@ def generate(
             contrast=random.randint(1, 50),
             pattern=random.choice(['rgb', 'single']), 
         )
-    elif random.random < 0.66:
+    elif random.random() < 0.66:
         canvas = linear_wave(
             canvas,
-            gap=(1, 20),
+            gap=random.randint(1, 20),
             skew=0,
             rowwise=True,
             color=(r,g,b),
@@ -76,15 +78,15 @@ def generate(
             canvas, 
             skew=0,
             color=(r,g,b),
-            gap=random.randint(1, 10),
-            thick=random.randint(1, 4),
-            contrast=random.randint(1, 50),
-            dev=random.randint(1, 5),
+            gap=random.randint(1, 4),
+            thick=random.randint(1, 3),
+            contrast=random.randint(1, 20),
+            dev=1,
             seed=random.randint(1, 100),
             directions=random.choice(['b', 'h', 'v']),
             pattern=random.choice(['sine', 'fixed', 'gaussian']),
-            tb_margins=random.random(),
-            lr_margins=random.random(),
+            tb_margins=0.3,
+            lr_margins=0.3,
         )
 
     return canvas
